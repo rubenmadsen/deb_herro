@@ -22,11 +22,11 @@ jobs:
           dotnet-version: '8.0.x'
 
       - name: Restore
-        run: dotnet restore src/dnb_test/dnb_test.csproj
+        run: dotnet restore src/dnb_test/herro.csproj
 
       - name: Publish
         run: |
-          dotnet publish src/dnb_test/dnb_test.csproj \
+          dotnet publish src/dnb_test/herro.csproj \
             -c Release \
             -r linux-x64 \
             --self-contained true \
