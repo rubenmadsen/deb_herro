@@ -1,0 +1,49 @@
+name: dnb zip test
+
+on:
+  push:
+    branches:
+      - qa
+      - prod
+  workflow_dispatch:
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup .NET
+        uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: '8.0.x'
+
+      - name: Restore
+        run: dotnet restore src/dnb_test/dnb_test.csproj
+
+      - name: Publish
+        run: |
+          dotnet publish src/dnb_test/dnb_test.csproj \
+            -c Release \
+            -r linux-x64 \
+            --self-contained true \
+            -o publish
+
+      - name: Set artifact name
+        run: |
+          echo "BRANCH_NAME=${GITHUB_REF_NAME}" >> $GITHUB_ENV
+          echo "ZIP_NAME=dnb_test-${GITHUB_REF_NAME}.zip" >> $GITHUB_ENV
+
+      - name: Create zip
+        run: |
+          cd publish
+          zip -r "../${ZIP_NAME}" .
+
+      - name: Upload artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: dnb_test-${{ env.BRANCH_NAME }}
+          path: ${{ env.ZIP_NAME }}
+          retention-days: 30
