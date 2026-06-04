@@ -35,7 +35,7 @@ jobs:
       - name: Set artifact name
         run: |
           echo "BRANCH_NAME=${GITHUB_REF_NAME}" >> $GITHUB_ENV
-          echo "ZIP_NAME=dnb_test-${GITHUB_REF_NAME}.zip" >> $GITHUB_ENV
+          echo "ZIP_NAME=Herro-${GITHUB_REF_NAME}.zip" >> $GITHUB_ENV
 
       - name: Create zip
         run: |
@@ -45,6 +45,6 @@ jobs:
       - name: Upload artifact
         uses: actions/upload-artifact@v4
         with:
-          name: dnb_test-${{ env.BRANCH_NAME }}
+          name: Herro-${{ env.BRANCH_NAME }}
           path: ${{ env.ZIP_NAME }}
           retention-days: 30
