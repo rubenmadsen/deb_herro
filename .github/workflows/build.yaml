@@ -1,28 +1,81 @@
-- name: Set release info
-  if: github.ref_name == 'qa' || github.ref_name == 'prod'
-  run: |
-    echo "TAG_NAME=v1.0.${GITHUB_RUN_NUMBER}" >> $GITHUB_ENV
-    echo "RELEASE_NAME=Herro v1.0.${GITHUB_RUN_NUMBER}" >> $GITHUB_ENV
+name: dnb zip test
 
-- name: Create QA prerelease
-  if: github.ref_name == 'qa'
-  uses: softprops/action-gh-release@v2
-  with:
-    tag_name: ${{ env.TAG_NAME }}
-    name: ${{ env.RELEASE_NAME }}
-    prerelease: true
-    generate_release_notes: true
-    files: |
-      ${{ env.ZIP_NAME }}
+on:
+  push:
+    branches:
+      - qa
+      - prod
+      - main
+  workflow_dispatch:
 
-- name: Create PROD release
-  if: github.ref_name == 'prod'
-  uses: softprops/action-gh-release@v2
-  with:
-    tag_name: ${{ env.TAG_NAME }}
-    name: ${{ env.RELEASE_NAME }}
-    prerelease: false
-    generate_release_notes: true
-    files: |
-      ${{ env.ZIP_NAME }}
-      
+permissions:
+  contents: write
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup .NET
+        uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: '8.0.x'
+
+      - name: Restore
+        run: dotnet restore Herro/Herro.csproj
+
+      - name: Publish
+        run: |
+          dotnet publish Herro/Herro.csproj \
+            -c Release \
+            -r linux-x64 \
+            --self-contained true \
+            -o publish
+
+      - name: Set artifact name
+        run: |
+          echo "BRANCH_NAME=${GITHUB_REF_NAME}" >> $GITHUB_ENV
+          echo "ZIP_NAME=Herro-${GITHUB_REF_NAME}.zip" >> $GITHUB_ENV
+
+      - name: Create zip
+        run: |
+          cd publish
+          zip -r "../${ZIP_NAME}" .
+
+      - name: Upload artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: Herro-${{ env.BRANCH_NAME }}
+          path: ${{ env.ZIP_NAME }}
+          retention-days: 30
+
+      - name: Set release info
+        if: github.ref_name == 'qa' || github.ref_name == 'prod'
+        run: |
+          echo "TAG_NAME=v1.0.${GITHUB_RUN_NUMBER}-${GITHUB_REF_NAME}" >> $GITHUB_ENV
+          echo "RELEASE_NAME=Herro v1.0.${GITHUB_RUN_NUMBER} ${GITHUB_REF_NAME}" >> $GITHUB_ENV
+
+      - name: Create QA prerelease
+        if: github.ref_name == 'qa'
+        uses: softprops/action-gh-release@v2
+        with:
+          tag_name: ${{ env.TAG_NAME }}
+          name: ${{ env.RELEASE_NAME }}
+          prerelease: true
+          generate_release_notes: true
+          files: |
+            ${{ env.ZIP_NAME }}
+
+      - name: Create PROD release
+        if: github.ref_name == 'prod'
+        uses: softprops/action-gh-release@v2
+        with:
+          tag_name: ${{ env.TAG_NAME }}
+          name: ${{ env.RELEASE_NAME }}
+          prerelease: false
+          generate_release_notes: true
+          files: |
+            ${{ env.ZIP_NAME }}
