@@ -38,7 +38,7 @@ jobs:
       - name: Set artifact name
         run: |
           echo "BRANCH_NAME=${GITHUB_REF_NAME}" >> $GITHUB_ENV
-          echo "ZIP_NAME=Herro-${GITHUB_REF_NAME}.zip" >> $GITHUB_ENV
+          echo "ZIP_NAME=release.zip"
 
       - name: Create zip
         run: |
